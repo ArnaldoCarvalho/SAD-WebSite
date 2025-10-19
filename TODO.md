@@ -55,6 +55,11 @@
 - [x] Combinações de critérios mais comuns (barras horizontais)
 - [x] Distribuição de feedback (pizza chart)
 - [x] Integração com Chart.js para visualizações
+- [ ] Melhorar gráficos existentes com design aprimorado
+- [ ] Atualizar para Chart.js v3 syntax
+- [ ] Adicionar gráfico de recomendações ao longo do tempo
+- [ ] Melhorar "Combinações de Critérios Mais Comuns" com cores e tooltips
+- [ ] Melhorar "Distribuição de Feedback" com interatividade
 
 ### 4. Páginas Adicionais
 - [x] Página de detalhes do carro (detalhes.html) - estrutura básica
@@ -90,7 +95,7 @@
 - Locais cobertos: Porto Centro, Vila Nova de Gaia, Leça da Palmeira, Gondomar, Maia, Póvoa de Varzim
 - Regras de associação: 18 regras pré-definidas
 - Filtros avançados: 4 categorias
-- Tipos de gráficos: 4 tipos diferentes
+- Tipos de gráficos: 5 tipos diferentes (após melhorias)
 - Tecnologias: HTML5, CSS3, JavaScript ES6+, Bootstrap, Chart.js, jsPDF
 
 ## Próximas Melhorias Potenciais

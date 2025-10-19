@@ -1,8 +1,7 @@
-// Analytics Dashboard Module
+// Analytics Dashboard Module - Versão Aprimorada
 class AnalyticsDashboard {
   constructor() {
-    this.chart = null;
-    this.successRateChart = null;
+    this.charts = {};
   }
 
   // Aggregate data from localStorage
@@ -12,6 +11,7 @@ class AnalyticsDashboard {
     const criterios = {};
     const feedbacks = { sim: 0, nao: 0, nenhum: 0 };
     const successRates = {};
+    const timelineData = {};
 
     historico.forEach(item => {
       // Count locations
@@ -33,9 +33,13 @@ class AnalyticsDashboard {
       if (feedback === 'sim') {
         successRates[item.local].positive++;
       }
+
+      // Timeline data
+      const date = new Date(item.data).toISOString().split('T')[0];
+      timelineData[date] = (timelineData[date] || 0) + 1;
     });
 
-    return { locais, criterios, feedbacks, successRates };
+    return { locais, criterios, feedbacks, successRates, timelineData, total: historico.length };
   }
 
   // Render analytics dashboard
@@ -45,24 +49,68 @@ class AnalyticsDashboard {
     if (!container) return;
 
     container.innerHTML = `
-      <div class="row">
-        <div class="col-md-6">
-          <h5>Recomendações por Local</h5>
-          <canvas id="locationsChart"></canvas>
-        </div>
-        <div class="col-md-6">
-          <h5>Taxas de Sucesso por Local</h5>
-          <canvas id="successRateChart"></canvas>
+      <div class="row mb-4">
+        <div class="col-12">
+          <div class="alert alert-info">
+            <h6 class="alert-heading"><i class="fas fa-chart-line"></i> Dashboard de Analytics</h6>
+            <p class="mb-0">Total de recomendações analisadas: <strong>${data.total}</strong></p>
+          </div>
         </div>
       </div>
-      <div class="row mt-4">
-        <div class="col-md-6">
-          <h5>Combinações de Critérios Mais Comuns</h5>
-          <canvas id="criteriaChart"></canvas>
+      <div class="row">
+        <div class="col-lg-6 col-md-12 mb-4">
+          <div class="card h-100">
+            <div class="card-header bg-primary text-white">
+              <h5 class="card-title mb-0"><i class="fas fa-map-marker-alt"></i> Recomendações por Local</h5>
+            </div>
+            <div class="card-body">
+              <canvas id="locationsChart" height="300"></canvas>
+            </div>
+          </div>
         </div>
-        <div class="col-md-6">
-          <h5>Distribuição de Feedback</h5>
-          <canvas id="feedbackChart"></canvas>
+        <div class="col-lg-6 col-md-12 mb-4">
+          <div class="card h-100">
+            <div class="card-header bg-success text-white">
+              <h5 class="card-title mb-0"><i class="fas fa-trophy"></i> Taxas de Sucesso por Local</h5>
+            </div>
+            <div class="card-body">
+              <canvas id="successRateChart" height="300"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-lg-6 col-md-12 mb-4">
+          <div class="card h-100">
+            <div class="card-header bg-warning text-dark">
+              <h5 class="card-title mb-0"><i class="fas fa-cogs"></i> Combinações de Critérios Mais Comuns</h5>
+            </div>
+            <div class="card-body">
+              <canvas id="criteriaChart" height="300"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-6 col-md-12 mb-4">
+          <div class="card h-100">
+            <div class="card-header bg-info text-white">
+              <h5 class="card-title mb-0"><i class="fas fa-comments"></i> Distribuição de Feedback</h5>
+            </div>
+            <div class="card-body">
+              <canvas id="feedbackChart" height="300"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-12 mb-4">
+          <div class="card">
+            <div class="card-header bg-secondary text-white">
+              <h5 class="card-title mb-0"><i class="fas fa-calendar-alt"></i> Recomendações ao Longo do Tempo</h5>
+            </div>
+            <div class="card-body">
+              <canvas id="timelineChart" height="200"></canvas>
+            </div>
+          </div>
         </div>
       </div>
     `;
@@ -71,100 +119,203 @@ class AnalyticsDashboard {
     this.renderSuccessRateChart(data.successRates);
     this.renderCriteriaChart(data.criterios);
     this.renderFeedbackChart(data.feedbacks);
+    this.renderTimelineChart(data.timelineData);
   }
 
   renderLocationsChart(locais) {
-    const ctx = document.getElementById('locationsChart').getContext('2d');
-    new Chart(ctx, {
+    const ctx = document.getElementById('locationsChart');
+    const sortedLocais = Object.entries(locais).sort(([,a], [,b]) => b - a);
+
+    this.charts.locations = new Chart(ctx, {
       type: 'bar',
       data: {
-        labels: Object.keys(locais),
+        labels: sortedLocais.map(([key]) => key),
         datasets: [{
           label: 'Número de Recomendações',
-          data: Object.values(locais),
-          backgroundColor: 'rgba(54, 162, 235, 0.5)',
-          borderColor: 'rgba(54, 162, 235, 1)',
-          borderWidth: 1
+          data: sortedLocais.map(([,value]) => value),
+          backgroundColor: 'rgba(13, 110, 253, 0.8)',
+          borderColor: 'rgba(13, 110, 253, 1)',
+          borderWidth: 2,
+          borderRadius: 4,
+          borderSkipped: false,
         }]
       },
       options: {
         responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            backgroundColor: 'rgba(0,0,0,0.8)',
+            titleColor: 'white',
+            bodyColor: 'white',
+            callbacks: {
+              label: function(context) {
+                return `Recomendações: ${context.parsed.y}`;
+              }
+            }
+          }
+        },
         scales: {
           y: {
-            beginAtZero: true
+            beginAtZero: true,
+            grid: {
+              color: 'rgba(0,0,0,0.1)'
+            },
+            ticks: {
+              precision: 0
+            }
+          },
+          x: {
+            grid: {
+              display: false
+            }
           }
+        },
+        animation: {
+          duration: 2000,
+          easing: 'easeOutQuart'
         }
       }
     });
   }
 
   renderSuccessRateChart(successRates) {
-    const ctx = document.getElementById('successRateChart').getContext('2d');
+    const ctx = document.getElementById('successRateChart');
     const labels = Object.keys(successRates);
     const rates = labels.map(local => (successRates[local].positive / successRates[local].total) * 100);
 
-    new Chart(ctx, {
+    const colors = [
+      'rgba(25, 135, 84, 0.8)',
+      'rgba(220, 53, 69, 0.8)',
+      'rgba(255, 193, 7, 0.8)',
+      'rgba(13, 202, 240, 0.8)',
+      'rgba(111, 66, 193, 0.8)',
+      'rgba(255, 159, 64, 0.8)'
+    ];
+
+    this.charts.successRate = new Chart(ctx, {
       type: 'doughnut',
       data: {
         labels: labels,
         datasets: [{
           label: 'Taxa de Sucesso (%)',
           data: rates,
-          backgroundColor: [
-            'rgba(75, 192, 192, 0.5)',
-            'rgba(255, 99, 132, 0.5)',
-            'rgba(255, 205, 86, 0.5)',
-            'rgba(153, 102, 255, 0.5)',
-            'rgba(255, 159, 64, 0.5)'
-          ],
-          borderColor: [
-            'rgba(75, 192, 192, 1)',
-            'rgba(255, 99, 132, 1)',
-            'rgba(255, 205, 86, 1)',
-            'rgba(153, 102, 255, 1)',
-            'rgba(255, 159, 64, 1)'
-          ],
-          borderWidth: 1
+          backgroundColor: colors.slice(0, labels.length),
+          borderColor: colors.slice(0, labels.length).map(color => color.replace('0.8', '1')),
+          borderWidth: 2,
+          hoverBorderWidth: 4
         }]
       },
       options: {
-        responsive: true
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              padding: 20,
+              usePointStyle: true
+            }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(0,0,0,0.8)',
+            titleColor: 'white',
+            bodyColor: 'white',
+            callbacks: {
+              label: function(context) {
+                const total = successRates[context.label].total;
+                const positive = successRates[context.label].positive;
+                return [
+                  `Taxa: ${context.parsed.toFixed(1)}%`,
+                  `Positivo: ${positive}/${total}`
+                ];
+              }
+            }
+          }
+        },
+        animation: {
+          animateRotate: true,
+          animateScale: true,
+          duration: 2000,
+          easing: 'easeOutQuart'
+        }
       }
     });
   }
 
   renderCriteriaChart(criterios) {
-    const ctx = document.getElementById('criteriaChart').getContext('2d');
+    const ctx = document.getElementById('criteriaChart');
     const topCriteria = Object.entries(criterios)
       .sort(([,a], [,b]) => b - a)
-      .slice(0, 5);
+      .slice(0, 8); // Mostrar top 8
 
-    new Chart(ctx, {
-      type: 'horizontalBar',
+    this.charts.criteria = new Chart(ctx, {
+      type: 'bar',
       data: {
-        labels: topCriteria.map(([key]) => key),
+        labels: topCriteria.map(([key]) => key.length > 20 ? key.substring(0, 20) + '...' : key),
         datasets: [{
           label: 'Frequência',
           data: topCriteria.map(([,value]) => value),
-          backgroundColor: 'rgba(255, 99, 132, 0.5)',
-          borderColor: 'rgba(255, 99, 132, 1)',
-          borderWidth: 1
+          backgroundColor: 'rgba(255, 193, 7, 0.8)',
+          borderColor: 'rgba(255, 193, 7, 1)',
+          borderWidth: 2,
+          borderRadius: 4,
+          borderSkipped: false,
         }]
       },
       options: {
+        indexAxis: 'y',
         responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            backgroundColor: 'rgba(0,0,0,0.8)',
+            titleColor: 'white',
+            bodyColor: 'white',
+            callbacks: {
+              title: function(context) {
+                return topCriteria[context[0].dataIndex][0];
+              },
+              label: function(context) {
+                return `Frequência: ${context.parsed.x}`;
+              }
+            }
+          }
+        },
         scales: {
           x: {
-            beginAtZero: true
+            beginAtZero: true,
+            grid: {
+              color: 'rgba(0,0,0,0.1)'
+            },
+            ticks: {
+              precision: 0
+            }
+          },
+          y: {
+            grid: {
+              display: false
+            }
           }
+        },
+        animation: {
+          duration: 2000,
+          easing: 'easeOutQuart'
         }
       }
     });
   }
 
   renderFeedbackChart(feedbacks) {
-    const ctx = document.getElementById('feedbackChart').getContext('2d');
-    new Chart(ctx, {
+    const ctx = document.getElementById('feedbackChart');
+
+    this.charts.feedback = new Chart(ctx, {
       type: 'pie',
       data: {
         labels: ['Positivo', 'Negativo', 'Nenhum'],
@@ -172,22 +323,137 @@ class AnalyticsDashboard {
           label: 'Feedback',
           data: [feedbacks.sim, feedbacks.nao, feedbacks.nenhum],
           backgroundColor: [
-            'rgba(75, 192, 192, 0.5)',
-            'rgba(255, 99, 132, 0.5)',
-            'rgba(255, 205, 86, 0.5)'
+            'rgba(25, 135, 84, 0.8)',
+            'rgba(220, 53, 69, 0.8)',
+            'rgba(108, 117, 125, 0.8)'
           ],
           borderColor: [
-            'rgba(75, 192, 192, 1)',
-            'rgba(255, 99, 132, 1)',
-            'rgba(255, 205, 86, 1)'
+            'rgba(25, 135, 84, 1)',
+            'rgba(220, 53, 69, 1)',
+            'rgba(108, 117, 125, 1)'
           ],
-          borderWidth: 1
+          borderWidth: 2,
+          hoverBorderWidth: 4
         }]
       },
       options: {
-        responsive: true
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              padding: 20,
+              usePointStyle: true
+            }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(0,0,0,0.8)',
+            titleColor: 'white',
+            bodyColor: 'white',
+            callbacks: {
+              label: function(context) {
+                const total = feedbacks.sim + feedbacks.nao + feedbacks.nenhum;
+                const percentage = ((context.parsed / total) * 100).toFixed(1);
+                return `${context.label}: ${context.parsed} (${percentage}%)`;
+              }
+            }
+          }
+        },
+        animation: {
+          animateRotate: true,
+          animateScale: true,
+          duration: 2000,
+          easing: 'easeOutQuart'
+        }
       }
     });
+  }
+
+  renderTimelineChart(timelineData) {
+    const ctx = document.getElementById('timelineChart');
+    const sortedDates = Object.keys(timelineData).sort();
+    const cumulativeData = [];
+    let cumulative = 0;
+
+    sortedDates.forEach(date => {
+      cumulative += timelineData[date];
+      cumulativeData.push(cumulative);
+    });
+
+    this.charts.timeline = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: sortedDates,
+        datasets: [{
+          label: 'Recomendações Acumuladas',
+          data: cumulativeData,
+          borderColor: 'rgba(108, 117, 125, 1)',
+          backgroundColor: 'rgba(108, 117, 125, 0.1)',
+          borderWidth: 3,
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: 'rgba(108, 117, 125, 1)',
+          pointBorderColor: 'white',
+          pointBorderWidth: 2,
+          pointRadius: 6,
+          pointHoverRadius: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            backgroundColor: 'rgba(0,0,0,0.8)',
+            titleColor: 'white',
+            bodyColor: 'white',
+            callbacks: {
+              title: function(context) {
+                return `Data: ${context[0].label}`;
+              },
+              label: function(context) {
+                return `Total Acumulado: ${context.parsed.y}`;
+              }
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: {
+              color: 'rgba(0,0,0,0.1)'
+            },
+            ticks: {
+              precision: 0
+            }
+          },
+          x: {
+            grid: {
+              display: false
+            },
+            ticks: {
+              maxTicksLimit: 7
+            }
+          }
+        },
+        animation: {
+          duration: 2000,
+          easing: 'easeOutQuart'
+        }
+      }
+    });
+  }
+
+  // Destroy all charts
+  destroyCharts() {
+    Object.values(this.charts).forEach(chart => {
+      if (chart) chart.destroy();
+    });
+    this.charts = {};
   }
 }
 
