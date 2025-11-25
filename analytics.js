@@ -4,12 +4,27 @@ class AnalyticsDashboard {
     this.charts = {};
   }
 
-  // Aggregate data from localStorage
-  getAnalyticsData() {
-    const historico = JSON.parse(localStorage.getItem('historicoRecomendacoes') || '[]');
+  // chama api para obter dados historico
+  async fetchAnalyticsData() {
+    try {
+      const response = await fetch('api.php?action=getHistorico');
+      const result = await response.json();
+
+      if (!result.success || !result.historico) {
+        throw new Error('Failed to fetch analytics data');
+      }
+      return result.historico;
+    } catch (error) {
+      console.error('Error fetching analytics data:', error);
+      return [];
+    }
+  }
+
+  async getAnalyticsData() {
+    const historico = await this.fetchAnalyticsData();
     const locais = {};
     const criterios = {};
-    const feedbacks = { sim: 0, nao: 0, nenhum: 0 };
+    const feedbacks = { sim: 0, não: 0, nenhum: 0 };
     const successRates = {};
     const timelineData = {};
 
@@ -27,12 +42,10 @@ class AnalyticsDashboard {
 
       // Calculate success rates per location
       if (!successRates[item.local]) {
-        successRates[item.local] = { total: 0, positive: 0 };
+        successRates[item.local] = { total: 0, positive: 0, nenhum: 0 };
       }
       successRates[item.local].total++;
-      if (feedback === 'sim') {
-        successRates[item.local].positive++;
-      }
+      (feedback === 'sim') ? successRates[item.local].positive++ : (feedback === 'nenhum') ? successRates[item.local].nenhum++ : null;
 
       // Timeline data
       const date = new Date(item.data).toISOString().split('T')[0];
@@ -43,8 +56,8 @@ class AnalyticsDashboard {
   }
 
   // Render analytics dashboard
-  renderDashboard() {
-    const data = this.getAnalyticsData();
+  async renderDashboard() {
+    const data = await this.getAnalyticsData();
     const container = document.getElementById('analyticsContainer');
     if (!container) return;
 
@@ -52,8 +65,8 @@ class AnalyticsDashboard {
       <div class="row mb-4">
         <div class="col-12">
           <div class="alert alert-info">
-            <h6 class="alert-heading"><i class="fas fa-chart-line"></i> Dashboard de Analytics</h6>
-            <p class="mb-0">Total de recomendações analisadas: <strong>${data.total}</strong></p>
+            <h6 class="alert-heading"><i class="fas fa-chart-line"></i> ${translations[currentLanguage].analyticsTitle}</h6>
+            <p class="mb-0">${translations[currentLanguage].totalRecommendation}<strong>${data.total}</strong></p>
           </div>
         </div>
       </div>
@@ -61,7 +74,7 @@ class AnalyticsDashboard {
         <div class="col-lg-6 col-md-12 mb-4">
           <div class="card h-100">
             <div class="card-header bg-primary text-white">
-              <h5 class="card-title mb-0"><i class="fas fa-map-marker-alt"></i> Recomendações por Local</h5>
+              <h5 class="card-title mb-0"><i class="fas fa-map-marker-alt"></i> ${translations[currentLanguage].locationsChartTitle}</h5>
             </div>
             <div class="card-body">
               <canvas id="locationsChart" height="300"></canvas>
@@ -71,7 +84,7 @@ class AnalyticsDashboard {
         <div class="col-lg-6 col-md-12 mb-4">
           <div class="card h-100">
             <div class="card-header bg-success text-white">
-              <h5 class="card-title mb-0"><i class="fas fa-trophy"></i> Taxas de Sucesso por Local</h5>
+              <h5 class="card-title mb-0"><i class="fas fa-trophy"></i> ${translations[currentLanguage].successRateChartTitle}</h5>
             </div>
             <div class="card-body">
               <canvas id="successRateChart" height="300"></canvas>
@@ -83,7 +96,7 @@ class AnalyticsDashboard {
         <div class="col-lg-6 col-md-12 mb-4">
           <div class="card h-100">
             <div class="card-header bg-warning text-dark">
-              <h5 class="card-title mb-0"><i class="fas fa-cogs"></i> Combinações de Critérios Mais Comuns</h5>
+              <h5 class="card-title mb-0"><i class="fas fa-cogs"></i> ${translations[currentLanguage].criteriaChartTitle}</h5>
             </div>
             <div class="card-body">
               <canvas id="criteriaChart" height="300"></canvas>
@@ -93,7 +106,7 @@ class AnalyticsDashboard {
         <div class="col-lg-6 col-md-12 mb-4">
           <div class="card h-100">
             <div class="card-header bg-info text-white">
-              <h5 class="card-title mb-0"><i class="fas fa-comments"></i> Distribuição de Feedback</h5>
+              <h5 class="card-title mb-0"><i class="fas fa-comments"></i> ${translations[currentLanguage].feedbackChartTitle}</h5>
             </div>
             <div class="card-body">
               <canvas id="feedbackChart" height="300"></canvas>
@@ -105,7 +118,7 @@ class AnalyticsDashboard {
         <div class="col-12 mb-4">
           <div class="card">
             <div class="card-header bg-secondary text-white">
-              <h5 class="card-title mb-0"><i class="fas fa-calendar-alt"></i> Recomendações ao Longo do Tempo</h5>
+              <h5 class="card-title mb-0"><i class="fas fa-calendar-alt"></i> ${translations[currentLanguage].timelineChartTitle}</h5>
             </div>
             <div class="card-body">
               <canvas id="timelineChart" height="200"></canvas>
@@ -153,7 +166,7 @@ class AnalyticsDashboard {
             bodyColor: 'white',
             callbacks: {
               label: function(context) {
-                return `Recomendações: ${context.parsed.y}`;
+                return `${translations[currentLanguage].recommendations} ${context.parsed.y}`;
               }
             }
           }
@@ -183,9 +196,10 @@ class AnalyticsDashboard {
   }
 
   renderSuccessRateChart(successRates) {
+
     const ctx = document.getElementById('successRateChart');
     const labels = Object.keys(successRates);
-    const rates = labels.map(local => (successRates[local].positive / successRates[local].total) * 100);
+    const rates = labels.map(local => (successRates[local].positive / (successRates[local].total-successRates[local].nenhum)) * 100);
 
     const colors = [
       'rgba(25, 135, 84, 0.8)',
@@ -226,11 +240,11 @@ class AnalyticsDashboard {
             bodyColor: 'white',
             callbacks: {
               label: function(context) {
-                const total = successRates[context.label].total;
+                const total = (successRates[context.label].total - successRates[context.label].nenhum);
                 const positive = successRates[context.label].positive;
                 return [
-                  `Taxa: ${context.parsed.toFixed(1)}%`,
-                  `Positivo: ${positive}/${total}`
+                  `${translations[currentLanguage].rate}: ${context.parsed.toFixed(1)}%`,
+                  `${translations[currentLanguage].positive}: ${positive}/${total}`
                 ];
               }
             }
@@ -257,7 +271,7 @@ class AnalyticsDashboard {
       data: {
         labels: topCriteria.map(([key]) => key.length > 20 ? key.substring(0, 20) + '...' : key),
         datasets: [{
-          label: 'Frequência',
+          label: `${translations[currentLanguage].frequency}`,
           data: topCriteria.map(([,value]) => value),
           backgroundColor: 'rgba(255, 193, 7, 0.8)',
           borderColor: 'rgba(255, 193, 7, 1)',
@@ -283,7 +297,7 @@ class AnalyticsDashboard {
                 return topCriteria[context[0].dataIndex][0];
               },
               label: function(context) {
-                return `Frequência: ${context.parsed.x}`;
+                return `${translations[currentLanguage].frequency}: ${context.parsed.x}`;
               }
             }
           }
@@ -318,10 +332,10 @@ class AnalyticsDashboard {
     this.charts.feedback = new Chart(ctx, {
       type: 'pie',
       data: {
-        labels: ['Positivo', 'Negativo', 'Nenhum'],
+        labels: [`${translations[currentLanguage].positive}`, `${translations[currentLanguage].negative}`, `${translations[currentLanguage].none}`],
         datasets: [{
           label: 'Feedback',
-          data: [feedbacks.sim, feedbacks.nao, feedbacks.nenhum],
+          data: [feedbacks.sim, feedbacks.não, feedbacks.nenhum],
           backgroundColor: [
             'rgba(25, 135, 84, 0.8)',
             'rgba(220, 53, 69, 0.8)',
@@ -353,7 +367,7 @@ class AnalyticsDashboard {
             bodyColor: 'white',
             callbacks: {
               label: function(context) {
-                const total = feedbacks.sim + feedbacks.nao + feedbacks.nenhum;
+                const total = feedbacks.sim + feedbacks.não + feedbacks.nenhum;
                 const percentage = ((context.parsed / total) * 100).toFixed(1);
                 return `${context.label}: ${context.parsed} (${percentage}%)`;
               }
@@ -413,10 +427,10 @@ class AnalyticsDashboard {
             bodyColor: 'white',
             callbacks: {
               title: function(context) {
-                return `Data: ${context[0].label}`;
+                return `${translations[currentLanguage].date} ${context[0].label}`;
               },
               label: function(context) {
-                return `Total Acumulado: ${context.parsed.y}`;
+                return `${translations[currentLanguage].cumulativeTotal} ${context.parsed.y}`;
               }
             }
           }
