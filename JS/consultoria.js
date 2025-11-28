@@ -3,7 +3,7 @@
 // Temporarily disabled for fictional direct access demo
 // if (localStorage.getItem('loggedIn') !== 'true') {
 //   console.log('Not logged in, redirecting to login.html');
-//   window.location.href = 'login.html';
+//   window.location.href = '../login.html';
 // } else {
 //   console.log('Logged in, staying on page');
 // }
@@ -127,7 +127,7 @@ async function loadHistorico(showAll = false) {
 }
 
 // Limpar histórico (nao funciona BD, deve limpar apenas do utilizador atual)
-document.getElementById('limparHistorico').addEventListener('click', function() {
+document.getElementById('limparHistorico').addEventListener('click', function () {
   /*const t = translations[currentLanguage];
   if (confirm(t.confirmClearHistory)) {
     localStorage.removeItem('historicoRecomendacoes');
@@ -162,7 +162,7 @@ function updateLocaisDatalist() {
 updateLocaisDatalist();
 
 // Event listener para gama luxo definir orçamento automaticamente
-document.getElementById('gama').addEventListener('change', function() {
+document.getElementById('gama').addEventListener('change', function () {
   const orcamentoSelect = document.getElementById('orcamento');
   if (this.value === 'luxo') {
     orcamentoSelect.value = 'alto';
@@ -175,13 +175,13 @@ document.getElementById('gama').addEventListener('change', function() {
   }
 });
 
-function disabledFeedbackButtons(){
+function disabledFeedbackButtons() {
   document.getElementById('thumbsUp').disabled = true;
   document.getElementById('thumbsDown').disabled = true;
 }
 
 
-document.getElementById('thumbsUp').addEventListener('click', async function() {
+document.getElementById('thumbsUp').addEventListener('click', async function () {
   if (!feedbackGiven && currentRecommendation && currentRecommendationId && currentFeedbackId) {
     feedbackGiven = true;
     try {
@@ -205,7 +205,7 @@ document.getElementById('thumbsUp').addEventListener('click', async function() {
   }
 });
 
-document.getElementById('thumbsDown').addEventListener('click', async function() {
+document.getElementById('thumbsDown').addEventListener('click', async function () {
   if (!feedbackGiven && currentRecommendation && currentRecommendationId && currentFeedbackId) {
     feedbackGiven = true;
     try {
@@ -230,25 +230,25 @@ document.getElementById('thumbsDown').addEventListener('click', async function()
 });
 
 // Event listeners para botões de ação (definidos uma vez)
-document.getElementById('exportBtn').addEventListener('click', function() {
+document.getElementById('exportBtn').addEventListener('click', function () {
   if (currentRecommendation && currentRespostas) {
     exportarRelatorio(currentRecommendation, currentRespostas);
   }
 });
 
-document.getElementById('shareBtn').addEventListener('click', function() {
+document.getElementById('shareBtn').addEventListener('click', function () {
   if (currentRecommendation) {
     compartilharRecomendacao(currentRecommendation);
   }
 });
 
-document.getElementById('directionsBtn').addEventListener('click', function() {
+document.getElementById('directionsBtn').addEventListener('click', function () {
   if (currentRecommendation) {
     mostrarDirecoes(currentRecommendation);
   }
 });
 
-document.getElementById('consultoriaForm').addEventListener('submit', async function(e) {
+document.getElementById('consultoriaForm').addEventListener('submit', async function (e) {
   e.preventDefault();
   const gama = document.getElementById('gama').value;
   const orcamento = document.getElementById('orcamento').value;
@@ -348,7 +348,7 @@ document.getElementById('consultoriaForm').addEventListener('submit', async func
   document.getElementById('recomendacao').textContent = melhorRegra.recomendacao;
   document.getElementById('resultado').classList.remove('d-none');
 
-  document.getElementById("resultado").scrollIntoView({ behavior: 'smooth', block: 'start'});
+  document.getElementById("resultado").scrollIntoView({ behavior: 'smooth', block: 'start' });
 
   // Mostrar seção de comparação se houver melhoresRegras
   if (melhorRegra.melhoresRegras && melhorRegra.melhoresRegras.length > 1) {
@@ -432,7 +432,7 @@ document.getElementById('consultoriaForm').addEventListener('submit', async func
 
   // Atualizar imagem do mapa com um mapa mundial destacando o Grande Porto
   if (melhorRegra.consequente) {
-    document.getElementById('map').src = 'img/mapa.png';
+    document.getElementById('map').src = '../img/mapa.png';
     document.getElementById('map').alt = 'Mapa do Grande Porto';
   }
 
@@ -552,12 +552,12 @@ function mostrarComodidadesProximas(recomendacao) {
 }
 
 // Inicializar EmailJS
-(function() {
+(function () {
   emailjs.init('8oTr3sfCMTgJvfPQ7'); // Chave pública do EmailJS
 })();
 
 // Função para enviar email do formulário de contacto
-document.getElementById('contactForm').addEventListener('submit', function(e) {
+document.getElementById('contactForm').addEventListener('submit', function (e) {
   e.preventDefault();
 
   const nome = document.getElementById('nome').value;
@@ -573,11 +573,11 @@ document.getElementById('contactForm').addEventListener('submit', function(e) {
   };
 
   emailjs.send('service_x9r0hya', 'template_qvvldga', templateParams)
-    .then(function(response) {
+    .then(function (response) {
       const t = translations[currentLanguage];
       alert(t.messageSent);
       document.getElementById('contactForm').reset();
-    }, function(error) {
+    }, function (error) {
       const t = translations[currentLanguage];
       alert(t.errorSendingMessage);
       console.error('Erro:', error);
@@ -585,7 +585,7 @@ document.getElementById('contactForm').addEventListener('submit', function(e) {
 });
 
 // Event listener para enviar recomendação por email
-document.getElementById('emailRecomendacaoBtn').addEventListener('click', function() {
+document.getElementById('emailRecomendacaoBtn').addEventListener('click', function () {
   if (!currentRecommendation) {
     const t = translations[currentLanguage];
     alert(t.noRecommendationAvailable);
@@ -610,11 +610,11 @@ document.getElementById('emailRecomendacaoBtn').addEventListener('click', functi
   };
 
   emailjs.send('service_x9r0hya', 'template_qvvldga', templateParams)
-    .then(function(response) {
+    .then(function (response) {
       const t = translations[currentLanguage];
       alert(t.recommendationSent);
       document.getElementById('emailRecomendacao').value = '';
-    }, function(error) {
+    }, function (error) {
       const t = translations[currentLanguage];
       alert(t.errorSendingRecommendation);
       console.error('Erro:', error);
@@ -622,7 +622,7 @@ document.getElementById('emailRecomendacaoBtn').addEventListener('click', functi
 });
 
 // Language dropdown event listeners
-document.addEventListener('click', function(e) {
+document.addEventListener('click', function (e) {
   if (e.target.closest('.dropdown-item[data-lang]')) {
     e.preventDefault();
     const lang = e.target.closest('.dropdown-item').getAttribute('data-lang');
@@ -634,18 +634,18 @@ document.addEventListener('click', function(e) {
 function updateLanguageDisplay(lang) {
   const t = translations[lang];
   const timestamp = Date.now();
-  document.getElementById('currentFlag').src = ((lang == 'pt') ? 'img/pt.png' : 'img/en.png') + '?t=' + timestamp;
+  document.getElementById('currentFlag').src = ((lang == 'pt') ? '../img/pt.png' : '../img/en.png') + '?t=' + timestamp;
   //document.getElementById('currentLanguage').textContent = t.language;
-  
+
 }
 
 // Initialize language display
 updateLanguageDisplay(currentLanguage);
 
 // Logout functionality
-document.getElementById('logoutBtn').addEventListener('click', function() {
+document.getElementById('logoutBtn').addEventListener('click', function () {
   localStorage.setItem('loggedIn', 'false');
-  window.location.href = 'login.html';
+  window.location.href = '../login.html';
 });
 
 let scrollTimer;

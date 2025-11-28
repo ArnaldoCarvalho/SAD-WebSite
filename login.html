@@ -47,7 +47,7 @@
       </div>
       <button type="submit" class="btn btn-primary w-100">Entrar</button>
     </form>
-    <p class="text-center mt-3">Não tem conta? <a href="register.html">Registar</a></p>
+    <p class="text-center mt-3">Não tem conta? <a href="Pages/register.html">Registar</a></p>
   </div>
 
   <script>
@@ -63,8 +63,8 @@
         localStorage.setItem('loggedIn', 'true');
         localStorage.setItem('currentUser', username);
         console.log('localStorage loggedIn set to:', localStorage.getItem('loggedIn'));
-        console.log('Redirecting to consultoria.html');
-        window.location.href = 'consultoria.html';
+        console.log('Redirecting to consultoria.php');
+        window.location.href = 'PHP/consultoria.php';
       } else {
         console.log('Login failed');
         alert('Nome de utilizador ou palavra-passe incorretos.');
