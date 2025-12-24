@@ -1,6 +1,6 @@
 // Firebase imports
 import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, orderBy, where, getDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-import { db } from '../firebase/firebase.js';
+import { db, auth } from '../firebase/firebase.js';
 
 // Check login status on page load
 //console.log('Checking login status:', localStorage.getItem('loggedIn'));
@@ -64,13 +64,20 @@ async function loadHistorico(showAll = false) {
   const historicoLista = document.getElementById('historicoLista');
   historicoLista.innerHTML = '';
 
+  if (!auth.currentUser) {
+    historicoLista.innerHTML = '<div class="col-12 text-center"><p class="text-muted">Please log in to view your recommendation history.</p></div>';
+    return;
+  }
+
   try {
-    const q = query(collection(db, 'recommendations'), orderBy('data', 'desc'));
+    const q = query(collection(db, 'recommendations'), where('userId', '==', auth.currentUser.uid));
     const querySnapshot = await getDocs(q);
     const historico = [];
     querySnapshot.forEach((doc) => {
       historico.push({ id: doc.id, ...doc.data() });
     });
+    // Sort by data descending client-side
+    historico.sort((a, b) => b.data.seconds - a.data.seconds);
 
     if (historico.length === 0) {
       historicoLista.innerHTML = '<div class="col-12 text-center"><p class="text-muted">' + translations[currentLanguage].noRecommendations + '</p></div>';
@@ -141,7 +148,7 @@ document.getElementById('limparHistorico').addEventListener('click', async funct
   const t = translations[currentLanguage];
   if (confirm(t.confirmClearHistory)) {
     try {
-      const q = query(collection(db, 'recommendations'));
+      const q = query(collection(db, 'recommendations'), where('userId', '==', auth.currentUser.uid));
       const querySnapshot = await getDocs(q);
       const deletePromises = [];
       querySnapshot.forEach((doc) => {
@@ -428,6 +435,7 @@ document.getElementById('consultoriaForm').addEventListener('submit', async func
   // Save recommendation and criteria to Firebase with feedback null
   try {
     const docRef = await addDoc(collection(db, 'recommendations'), {
+      userId: auth.currentUser.uid,
       local: melhorRegra.consequente,
       criterios: respostas,
       advancedFilters: filtrosAvancados,

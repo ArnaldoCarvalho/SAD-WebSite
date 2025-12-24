@@ -4,7 +4,7 @@ import socketserver
 import mimetypes
 import os
 
-PORT = 8000
+PORT = 8080
 
 # Change to the SAD-WebSite directory
 os.chdir('SAD-WebSite')
