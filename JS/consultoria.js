@@ -455,6 +455,26 @@ document.getElementById('directionsBtn').addEventListener('click', function () {
 document.getElementById('consultoriaForm').addEventListener('submit', async function (e) {
   e.preventDefault();
 
+  const localEspecifico = document.getElementById('localEspecifico').value.trim();
+  const errorDiv = document.getElementById('localEspecificoError');
+
+  // Check if localEspecifico is empty
+  if (!localEspecifico) {
+    if (!errorDiv) {
+      const newErrorDiv = document.createElement('div');
+      newErrorDiv.id = 'localEspecificoError';
+      newErrorDiv.className = 'text-danger mt-1';
+      newErrorDiv.textContent = translations[currentLanguage].pleaseAddItemToList;
+      document.getElementById('localEspecifico').parentNode.appendChild(newErrorDiv);
+    }
+    document.getElementById('localEspecifico').focus();
+    return; // Prevent form submission
+  } else {
+    if (errorDiv) {
+      errorDiv.remove();
+    }
+  }
+
   // Show loading indicator
   const loadingIndicator = document.createElement('div');
   loadingIndicator.id = 'loadingIndicator';
@@ -470,7 +490,6 @@ document.getElementById('consultoriaForm').addEventListener('submit', async func
   const orcamento = document.getElementById('orcamento').value;
   const cliente = document.getElementById('cliente').value;
   const localizacao = document.getElementById('localizacao').value;
-  const localEspecifico = document.getElementById('localEspecifico').value.trim();
 
   // Get modelo value
   let modelo = document.getElementById('modelo').value;
